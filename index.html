@@ -1,0 +1,1414 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<title>Гномий роадмап</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800;900&family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700&display=swap">
+<style>
+/* Layout: сайт-одностраничник. Липкое меню → главный экран с живой травой (как стены травы в Миде) и блочным гномом →
+   «Что дальше» → путь режима по этапам → плитки систем → рабочая доска с редактированием → подвал.
+   Цвета взяты из интерфейса игры: тёмные панели, золотая шапка досок, зелень травы. */
+:root {
+  --bg: #0f1218;
+  --bg-2: #141923;
+  --panel: #1a1e2a;
+  --panel-2: #232838;
+  --line: #2e3446;
+  --fg: #eef0f6;
+  --muted: #9aa2b8;
+  --gold: #ffcd37;
+  --gold-ink: #261e04;
+  --wood: #3a2416;
+  --grass: #3f7a3a;
+  --idea: #a98bff;
+  --plan: #6cc4ff;
+  --work: #ff9f43;
+  --done: #5fe39a;
+  --hot: #ff6b6b;
+  --font-display: "Montserrat", "Arial Black", system-ui, sans-serif;
+  --font-body: "Nunito Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+:root { padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+body { margin: 0; -webkit-text-size-adjust: 100%; }
+img { max-width: 100%; }
+[hidden] { display: none !important; }
+html { scroll-behavior: smooth; scroll-padding-top: calc(70px + env(safe-area-inset-top, 0px)); }
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.5;
+}
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0 0 auto;
+  height: env(safe-area-inset-top, 0px);
+  z-index: 10;
+  background: var(--bg);
+}
+.inner {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+a { color: inherit; }
+:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+
+/* Меню */
+.nav {
+  position: sticky;
+  top: env(safe-area-inset-top, 0px);
+  z-index: 9;
+  background: rgba(15, 18, 24, 0.88);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--line);
+}
+.nav .inner {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  height: 60px;
+}
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: 17px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  flex: none;
+}
+.logo-mark {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: var(--gold);
+  display: grid;
+  place-items: center;
+}
+.logo-mark svg { width: 20px; height: 20px; }
+.links {
+  display: flex;
+  gap: 4px;
+  margin-left: auto;
+  overflow-x: auto;
+  scrollbar-width: none;
+  min-width: 0;
+}
+.links::-webkit-scrollbar { display: none; }
+.links a {
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--muted);
+  padding: 7px 11px;
+  border-radius: 9px;
+  white-space: nowrap;
+}
+.links a:hover { color: var(--fg); background: var(--panel); }
+
+/* Главный экран */
+.hero {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(180deg, #0b1a24 0%, #12321f 55%, #1b3a1a 100%);
+  border-bottom: 4px solid var(--wood);
+}
+.hero canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, rgba(10, 14, 18, 0.92) 0%, rgba(10, 14, 18, 0.7) 38%, rgba(10, 14, 18, 0) 70%);
+  pointer-events: none;
+}
+.hero .inner {
+  position: relative;
+  z-index: 1;
+  padding-block: clamp(48px, 8vw, 96px) clamp(40px, 7vw, 80px);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  max-width: 1240px;
+}
+.eyebrow {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 12.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+.hero h1 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: clamp(40px, 7.5vw, 84px);
+  line-height: 0.95;
+  text-transform: uppercase;
+  letter-spacing: -0.01em;
+  max-width: 11ch;
+  text-wrap: balance;
+}
+.hero h1 em { font-style: normal; color: var(--gold); }
+.hero p.lead {
+  margin: 0;
+  max-width: 46ch;
+  font-size: clamp(15px, 1.6vw, 18px);
+  color: #d5dbe6;
+}
+.hero-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 6px;
+}
+.hs {
+  background: rgba(20, 25, 35, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 10px 14px;
+  min-width: 108px;
+  display: flex;
+  flex-direction: column;
+}
+.hs b {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: 26px;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+.hs small {
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.hs.done b { color: var(--done); }
+.hero-progress {
+  max-width: 460px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.hero-progress .bar {
+  height: 12px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+}
+.hero-progress .bar i {
+  display: block;
+  height: 100%;
+  width: 0;
+  background: linear-gradient(90deg, var(--done), #a8f5c8);
+  transition: width 0.6s ease;
+}
+.hero-progress span { font-size: 13px; color: var(--muted); font-weight: 600; }
+.cta-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 4px; }
+
+/* Кнопки */
+.btn {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 14px;
+  border: 0;
+  border-radius: 12px;
+  padding: 12px 18px;
+  cursor: pointer;
+  background: var(--panel-2);
+  color: var(--fg);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.btn-gold { background: var(--gold); color: var(--gold-ink); }
+.btn-gold:hover { filter: brightness(1.06); }
+.btn-ghost { background: rgba(255, 255, 255, 0.08); }
+.btn-ghost:hover { background: rgba(255, 255, 255, 0.14); }
+
+/* Секции */
+section.block { padding-block: clamp(48px, 7vw, 80px); }
+section.block.alt { background: var(--bg-2); }
+.sec-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 8px 20px;
+  margin-bottom: 24px;
+}
+.sec-head h2 {
+  margin: 4px 0 0;
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: clamp(26px, 3.6vw, 38px);
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+  text-wrap: balance;
+}
+.sec-head p { margin: 0; color: var(--muted); max-width: 52ch; }
+
+/* Что дальше */
+.next-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+.next-card {
+  background: var(--panel);
+  border-radius: 16px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.next-card .band {
+  padding: 10px 16px;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+.next-card.s-work .band { background: var(--work); color: #2b1600; }
+.next-card.s-plan .band { background: var(--plan); color: #06223a; }
+.next-card .body { padding: 14px 16px 18px; display: flex; flex-direction: column; gap: 8px; }
+.next-card h3 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 20px;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+.next-card p { margin: 0; color: #c7cbd9; font-size: 14px; white-space: pre-wrap; overflow-wrap: anywhere; }
+
+/* Путь режима */
+.path {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0;
+  position: relative;
+}
+.stop {
+  position: relative;
+  padding: 0 14px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+.stop .rail {
+  position: relative;
+  height: 28px;
+  display: flex;
+  align-items: center;
+}
+.stop .rail::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: -14px;
+  top: 50%;
+  height: 4px;
+  transform: translateY(-50%);
+  background: var(--line);
+}
+.stop:last-child .rail::before { right: 0; background: linear-gradient(90deg, var(--line), transparent); }
+.stop .node {
+  position: relative;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  border: 4px solid var(--bg);
+  box-shadow: 0 0 0 2px currentColor;
+  background: currentColor;
+}
+.stop h3 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: 18px;
+  text-transform: uppercase;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.stop h3 span { font-size: 14px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.stop ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.stop li {
+  font-size: 14px;
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  overflow-wrap: anywhere;
+}
+.stop li::before {
+  content: "";
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-radius: 2px;
+  background: currentColor;
+  transform: translateY(-2px);
+}
+.stop li.more { color: var(--muted); }
+.stop li.more::before { background: transparent; }
+.stop li.more a { color: var(--gold); text-decoration: none; font-weight: 700; }
+.stop .s-text { color: var(--fg); }
+.stop.s-done li { color: #cfe9da; }
+
+/* Системы */
+.systems {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 12px;
+}
+.sys {
+  background: var(--panel);
+  border: 2px solid transparent;
+  border-radius: 14px;
+  padding: 14px;
+  text-align: left;
+  color: var(--fg);
+  font: inherit;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.sys:hover { border-color: var(--gold); }
+.sys b { font-family: var(--font-display); font-weight: 800; font-size: 16px; }
+.sys small { color: var(--muted); font-weight: 600; font-size: 13px; }
+.sys .mini-bar {
+  display: flex;
+  height: 8px;
+  border-radius: 4px;
+  overflow: hidden;
+  background: var(--panel-2);
+}
+.sys .mini-bar i { display: block; height: 100%; }
+
+/* Доска */
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 14px;
+}
+.search {
+  flex: 1 1 220px;
+  min-width: 0;
+  background: var(--panel);
+  border: 2px solid var(--line);
+  color: var(--fg);
+  border-radius: 12px;
+  padding: 10px 14px;
+  font: inherit;
+}
+.search:focus-visible, .field:focus-visible { outline: none; border-color: var(--gold); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; width: 100%; }
+.chip {
+  border: 2px solid var(--line);
+  background: transparent;
+  color: var(--muted);
+  border-radius: 999px;
+  padding: 5px 12px;
+  font: 700 13px var(--font-body);
+  cursor: pointer;
+}
+.chip[aria-pressed="true"] { border-color: var(--gold); color: var(--gold); }
+.composer {
+  background: var(--panel);
+  border: 2px solid var(--gold);
+  border-radius: 16px;
+  padding: 16px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.composer .full { grid-column: 1 / -1; }
+.field {
+  width: 100%;
+  min-width: 0;
+  background: var(--panel-2);
+  border: 2px solid var(--line);
+  color: var(--fg);
+  border-radius: 10px;
+  padding: 9px 12px;
+  font: inherit;
+}
+textarea.field { resize: vertical; min-height: 70px; }
+label.lbl {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.row-end { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
+
+.kanban {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  align-items: start;
+}
+.col {
+  background: var(--panel);
+  border-radius: 16px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+.col-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 2px 4px 6px;
+  border-bottom: 2px solid var(--line);
+}
+.col-head h3 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: 16px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.col-head .dot { width: 10px; height: 10px; border-radius: 3px; flex: none; }
+.col-head .count {
+  margin-left: auto;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 13px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.col-hint { color: var(--muted); font-size: 12.5px; margin: -4px 4px 0; }
+.empty {
+  border: 2px dashed var(--line);
+  border-radius: 12px;
+  padding: 18px 12px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 13.5px;
+}
+.card {
+  background: var(--panel-2);
+  border-radius: 12px;
+  padding: 11px 12px 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  border-left: 4px solid var(--line);
+  min-width: 0;
+}
+.card.p-high { border-left-color: var(--hot); }
+.card.p-mid { border-left-color: var(--gold); }
+.card.p-low { border-left-color: #5b6278; }
+.card h4 {
+  margin: 0;
+  font-weight: 700;
+  font-size: 15.5px;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+.meta { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.tag {
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--muted);
+}
+.prio { font-size: 11.5px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; }
+.prio.p-high { color: var(--hot); }
+.prio.p-mid { color: var(--gold); }
+.prio.p-low { color: var(--muted); }
+.notes { margin: 0; font-size: 13.5px; color: #c7cbd9; white-space: pre-wrap; overflow-wrap: anywhere; }
+.notes.none { color: var(--muted); font-style: italic; }
+.actions { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding-top: 2px; }
+.mini {
+  font: 700 12.5px var(--font-body);
+  border: 0;
+  border-radius: 8px;
+  padding: 5px 9px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--fg);
+  cursor: pointer;
+}
+.mini:hover { background: rgba(255, 255, 255, 0.12); }
+.mini.danger { color: var(--hot); }
+.mini.ok { background: var(--gold); color: var(--gold-ink); }
+.confirm { color: var(--hot); font-size: 12.5px; font-weight: 700; }
+.notice {
+  background: var(--panel);
+  border-radius: 14px;
+  padding: 14px 16px;
+  color: var(--muted);
+  border: 2px solid var(--line);
+  margin-bottom: 14px;
+}
+
+footer {
+  border-top: 4px solid var(--wood);
+  background: #0b0e13;
+  padding-block: 28px calc(28px + env(safe-area-inset-bottom, 0px));
+  color: var(--muted);
+  font-size: 13.5px;
+}
+footer .inner { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px 24px; }
+footer b { color: var(--fg); font-family: var(--font-display); font-weight: 800; }
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(18px + env(safe-area-inset-bottom, 0px));
+  transform: translateX(-50%);
+  background: var(--panel-2);
+  border: 2px solid var(--hot);
+  color: var(--fg);
+  padding: 10px 16px;
+  border-radius: 12px;
+  font-weight: 700;
+  max-width: calc(100% - 32px);
+  z-index: 20;
+}
+
+@media (max-width: 1000px) {
+  .kanban { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .next-grid { grid-template-columns: minmax(0, 1fr); }
+  .path { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: 28px; }
+  .stop:nth-child(2) .rail::before { right: 0; }
+}
+@media (max-width: 640px) {
+  .kanban, .path { grid-template-columns: minmax(0, 1fr); }
+  .stop .rail::before { right: 0; }
+  .composer { grid-template-columns: minmax(0, 1fr); }
+  .hero::after { background: linear-gradient(180deg, rgba(10, 14, 18, 0.55) 0%, rgba(10, 14, 18, 0.88) 100%); }
+  .links a { padding: 7px 8px; font-size: 13px; }
+  .logo span.word { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .hero-progress .bar i { transition: none; }
+}
+
+/* Экран «нет доступа» */
+.lock {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 40px;
+  background: linear-gradient(180deg, #0b1a24 0%, #12321f 100%);
+}
+.lock-card {
+  max-width: 440px;
+  background: var(--panel);
+  border-radius: 18px;
+  border: 3px solid var(--wood);
+  overflow: hidden;
+}
+.lock-card .top {
+  background: var(--gold);
+  color: var(--gold-ink);
+  padding: 14px 20px;
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: 20px;
+  text-transform: uppercase;
+}
+.lock-card .txt { padding: 18px 20px 22px; color: #d5dbe6; display: flex; flex-direction: column; gap: 10px; }
+.lock-card .txt p { margin: 0; }
+.lock-card code { background: var(--panel-2); padding: 1px 6px; border-radius: 6px; font-size: 13px; overflow-wrap: anywhere; }
+.io { display: flex; gap: 8px; flex-wrap: wrap; }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="inner">
+    <a class="logo" href="#top">
+      <span class="logo-mark" aria-hidden="true">
+        <svg viewBox="0 0 20 20"><rect x="7" y="1" width="6" height="4" fill="#b81c26"/><rect x="5" y="5" width="10" height="4" fill="#d22630"/><rect x="5" y="9" width="10" height="4" fill="#ecba94"/><rect x="5" y="13" width="10" height="6" fill="#f5f5f0"/></svg>
+      </span>
+      <span class="word">Гномий режим</span>
+    </a>
+    <div class="links">
+      <a href="#next">Дальше</a>
+      <a href="#path">Путь</a>
+      <a href="#systems">Системы</a>
+      <a href="#board">Доска</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero" id="top">
+  <canvas id="grass" aria-hidden="true"></canvas>
+  <div class="inner">
+    <div class="eyebrow">Roblox · роадмап разработки</div>
+    <h1>Гномий <em>режим</em></h1>
+    <p class="lead">Монеты, флипы, гномы за спиной, шахта, оборона базы и Король гномов раз в 10 минут. Здесь всё, что уже в игре, что делаем дальше и какие идеи ждут своей очереди.</p>
+    <div class="hero-stats">
+      <div class="hs done"><b id="h-done">–</b><small>Готово</small></div>
+      <div class="hs"><b id="h-work">–</b><small>В работе</small></div>
+      <div class="hs"><b id="h-plan">–</b><small>В планах</small></div>
+      <div class="hs"><b id="h-idea">–</b><small>Идей</small></div>
+    </div>
+    <div class="hero-progress">
+      <div class="bar"><i id="h-bar"></i></div>
+      <span id="h-pct">Загружаю роадмап…</span>
+    </div>
+    <div class="cta-row">
+      <a class="btn btn-gold" href="#board">Открыть доску</a>
+      <a class="btn btn-ghost" href="#next">Что дальше</a>
+    </div>
+  </div>
+</header>
+
+<section class="block" id="next">
+  <div class="inner">
+    <div class="sec-head">
+      <div>
+        <div class="eyebrow">На очереди</div>
+        <h2>Что дальше</h2>
+      </div>
+      <p>Всё, что сейчас в работе, и самые важные пункты из планов.</p>
+    </div>
+    <div class="next-grid" id="nextGrid"></div>
+  </div>
+</section>
+
+<section class="block alt" id="path">
+  <div class="inner">
+    <div class="sec-head">
+      <div>
+        <div class="eyebrow">От идеи до игры</div>
+        <h2>Путь режима</h2>
+      </div>
+      <p>Каждый пункт проходит четыре этапа. Сначала самое важное.</p>
+    </div>
+    <div class="path" id="pathRow"></div>
+  </div>
+</section>
+
+<section class="block" id="systems">
+  <div class="inner">
+    <div class="sec-head">
+      <div>
+        <div class="eyebrow">По частям игры</div>
+        <h2>Системы</h2>
+      </div>
+      <p>Нажми на систему, чтобы открыть на доске только её пункты.</p>
+    </div>
+    <div class="systems" id="sysGrid"></div>
+  </div>
+</section>
+
+<section class="block alt" id="board">
+  <div class="inner">
+    <div class="sec-head">
+      <div>
+        <div class="eyebrow">Рабочая доска</div>
+        <h2>Доска задач</h2>
+      </div>
+      <p>Добавляй пункты, переноси между колонками, пиши примечания. Всё сохраняется сразу.</p>
+    </div>
+    <div class="toolbar">
+      <input class="search" id="q" type="search" placeholder="Поиск по названию и примечаниям" aria-label="Поиск">
+      <button class="btn btn-gold" id="addBtn" type="button">+ Новый пункт</button>
+      <div class="io" id="io" hidden>
+        <button class="btn btn-ghost" id="exportBtn" type="button">Скачать копию</button>
+        <label class="btn btn-ghost" for="importFile">Импорт</label>
+        <input type="file" id="importFile" accept="application/json,.json" hidden>
+      </div>
+      <div class="chips" id="chips" role="group" aria-label="Фильтр по системе"></div>
+    </div>
+    <form class="composer" id="composer" hidden>
+      <label class="lbl full">Что сделать
+        <input class="field" id="f-title" required maxlength="140" placeholder="Например: рыбалка у рыбака">
+      </label>
+      <label class="lbl">Система
+        <select class="field" id="f-area"></select>
+      </label>
+      <label class="lbl">Приоритет
+        <select class="field" id="f-prio"></select>
+      </label>
+      <label class="lbl">Колонка
+        <select class="field" id="f-status"></select>
+      </label>
+      <label class="lbl full">Примечание
+        <textarea class="field" id="f-notes" maxlength="2000" placeholder="Детали, награды, вопросы, ссылки"></textarea>
+      </label>
+      <div class="row-end full">
+        <button class="btn" type="button" id="cancelAdd">Отмена</button>
+        <button class="btn btn-gold" type="submit">Добавить</button>
+      </div>
+    </form>
+    <div id="notice" class="notice" hidden></div>
+    <div class="kanban" id="kanban"></div>
+  </div>
+</section>
+
+<footer>
+  <div class="inner">
+    <span><b>Гномий режим</b> · роадмап разработки для Roblox</span>
+    <span id="foot-upd">Обновляется вживую</span>
+  </div>
+</footer>
+<div class="toast" id="toast" hidden></div>
+
+<!-- ===================== НАСТРОЙКА =====================
+     Вставь сюда конфиг своего проекта Firebase:
+     Firebase Console → Project settings → General → Your apps → Web app → firebaseConfig -->
+<script>
+window.FIREBASE_CONFIG = {
+  apiKey: "",
+  authDomain: "",
+  projectId: "",
+  storageBucket: "",
+  messagingSenderId: "",
+  appId: ""
+};
+</script>
+<!-- ===================================================== -->
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script>
+(function () {
+  var STATUSES = [
+    { id: "idea", name: "Идеи", hint: "Всё, что пришло в голову", color: "var(--idea)" },
+    { id: "plan", name: "В планах", hint: "Решено делать, ждёт очереди", color: "var(--plan)" },
+    { id: "work", name: "В работе", hint: "Делаем прямо сейчас", color: "var(--work)" },
+    { id: "done", name: "Готово", hint: "Уже в игре", color: "var(--done)" }
+  ];
+  var PATH_ORDER = ["done", "work", "plan", "idea"];
+  var AREAS = ["Экономика", "Удержание", "Социалка", "Монетизация", "Боссы", "Ивенты", "Мид", "Гномы", "Шахта", "Оборона", "Техничка"];
+  var PRIOS = [{ id: "high", name: "Высокий" }, { id: "mid", name: "Средний" }, { id: "low", name: "Низкий" }];
+  var PRIO_RANK = { high: 0, mid: 1, low: 2 };
+
+  var items = [];
+  var loaded = false;
+  var db = null;
+  var canWrite = true;
+  var filter = { area: "all", q: "" };
+  var editing = null;
+  var draft = {};
+  var confirmDel = null;
+
+  var $ = function (id) { return document.getElementById(id); };
+  function el(tag, cls, text) {
+    var n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text != null) n.textContent = text;
+    return n;
+  }
+  function option(sel, value, label) {
+    var o = document.createElement("option");
+    o.value = value;
+    o.textContent = label;
+    sel.appendChild(o);
+  }
+  function statusOf(id) { for (var i = 0; i < STATUSES.length; i++) if (STATUSES[i].id === id) return STATUSES[i]; return STATUSES[0]; }
+  function prioName(id) { for (var i = 0; i < PRIOS.length; i++) if (PRIOS[i].id === id) return PRIOS[i].name; return ""; }
+  function byPrio(a, b) {
+    var pr = (PRIO_RANK[a.priority] ?? 1) - (PRIO_RANK[b.priority] ?? 1);
+    return pr !== 0 ? pr : (a.created || 0) - (b.created || 0);
+  }
+  function plural(n, one, few, many) {
+    var m10 = n % 10, m100 = n % 100;
+    if (m10 === 1 && m100 !== 11) return one;
+    if (m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14)) return few;
+    return many;
+  }
+
+  var toastTimer;
+  function toast(msg) {
+    var t = $("toast");
+    t.textContent = msg;
+    t.hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { t.hidden = true; }, 3500);
+  }
+  function fail(e) {
+    var code = e && e.code;
+    if (code === "permission-denied") {
+      toast("Нет доступа: проверь ссылку и правила Firestore.");
+    } else if (code === "resource-exhausted") {
+      toast("Закончился бесплатный лимит Firebase на сегодня.");
+    } else if (code === "invalid-argument") {
+      toast("Слишком длинный текст: название до 140 символов, примечание до 2000.");
+    } else {
+      toast("Не получилось сохранить. Проверь интернет и попробуй ещё раз.");
+    }
+  }
+
+  // ---------- Форма ----------
+  AREAS.forEach(function (a) { option($("f-area"), a, a); });
+  PRIOS.forEach(function (p) { option($("f-prio"), p.id, p.name); });
+  STATUSES.forEach(function (s) { option($("f-status"), s.id, s.name); });
+  $("f-prio").value = "mid";
+  $("f-status").value = "idea";
+  $("addBtn").addEventListener("click", function () {
+    var c = $("composer");
+    c.hidden = !c.hidden;
+    if (!c.hidden) $("f-title").focus();
+  });
+  $("cancelAdd").addEventListener("click", function () { $("composer").hidden = true; });
+  $("composer").addEventListener("submit", function (ev) {
+    ev.preventDefault();
+    if (!db) { toast("Хранилище сейчас недоступно."); return; }
+    var title = $("f-title").value.trim();
+    if (!title) { $("f-title").focus(); return; }
+    db.collection("items").add({
+      title: title,
+      notes: $("f-notes").value.trim(),
+      area: $("f-area").value,
+      priority: $("f-prio").value,
+      status: $("f-status").value,
+      created: Date.now()
+    }).then(function () {
+      $("f-title").value = "";
+      $("f-notes").value = "";
+      $("composer").hidden = true;
+    }, fail);
+  });
+  $("q").addEventListener("input", function (e) { filter.q = e.target.value.trim().toLowerCase(); renderBoard(); });
+
+  function update(id, patch) {
+    if (!db) return Promise.resolve();
+    return db.collection("items").doc(id).update(patch).catch(fail);
+  }
+
+  // ---------- Главный экран ----------
+  function renderHero() {
+    var c = { idea: 0, plan: 0, work: 0, done: 0 };
+    items.forEach(function (it) { c[it.status]++; });
+    ["done", "work", "plan", "idea"].forEach(function (k) { $("h-" + k).textContent = loaded ? c[k] : "–"; });
+    var total = items.length;
+    var pct = total ? Math.round(c.done / total * 100) : 0;
+    $("h-bar").style.width = pct + "%";
+    $("h-pct").textContent = !loaded ? "Загружаю роадмап…"
+      : total ? "Готово " + c.done + " из " + total + " " + plural(total, "пункта", "пунктов", "пунктов") + " · " + pct + "%"
+      : "Роадмап пока пуст";
+  }
+
+  // ---------- Что дальше ----------
+  function renderNext() {
+    var box = $("nextGrid");
+    box.textContent = "";
+    if (!loaded) { box.appendChild(el("div", "empty", "Загружаю…")); return; }
+    var work = items.filter(function (i) { return i.status === "work"; }).sort(byPrio);
+    var plan = items.filter(function (i) { return i.status === "plan"; }).sort(byPrio);
+    var list = work.concat(plan).slice(0, 3);
+    if (!list.length) {
+      box.appendChild(el("div", "empty", "Пока нечего показать. Перенеси пункты в «В планах» или «В работе» на доске."));
+      return;
+    }
+    list.forEach(function (it) {
+      var card = el("article", "next-card s-" + it.status);
+      var band = el("div", "band");
+      band.appendChild(el("span", null, statusOf(it.status).name));
+      band.appendChild(el("span", null, it.area || ""));
+      card.appendChild(band);
+      var body = el("div", "body");
+      body.appendChild(el("h3", null, it.title));
+      body.appendChild(el("span", "prio p-" + it.priority, "Приоритет: " + prioName(it.priority).toLowerCase()));
+      if (it.notes) body.appendChild(el("p", null, it.notes));
+      card.appendChild(body);
+      box.appendChild(card);
+    });
+  }
+
+  // ---------- Путь ----------
+  function renderPath() {
+    var row = $("pathRow");
+    row.textContent = "";
+    PATH_ORDER.forEach(function (sid) {
+      var s = statusOf(sid);
+      var stop = el("div", "stop s-" + sid);
+      stop.style.color = s.color;
+      var rail = el("div", "rail");
+      rail.appendChild(el("span", "node"));
+      stop.appendChild(rail);
+      var h = el("h3", "s-text", s.name);
+      var list = items.filter(function (i) { return i.status === sid; }).sort(byPrio);
+      h.appendChild(el("span", null, loaded ? String(list.length) : ""));
+      stop.appendChild(h);
+      var ul = el("ul");
+      var LIMIT = 6;
+      if (!loaded) ul.appendChild(el("li", "more", "Загружаю…"));
+      else if (!list.length) ul.appendChild(el("li", "more", "Пока пусто"));
+      list.slice(0, LIMIT).forEach(function (it) {
+        var li = el("li");
+        li.appendChild(el("span", "s-text", it.title));
+        ul.appendChild(li);
+      });
+      if (list.length > LIMIT) {
+        var more = el("li", "more");
+        var a = el("a", null, "ещё " + (list.length - LIMIT) + " на доске →");
+        a.href = "#board";
+        more.appendChild(a);
+        ul.appendChild(more);
+      }
+      stop.appendChild(ul);
+      row.appendChild(stop);
+    });
+  }
+
+  // ---------- Системы ----------
+  function renderSystems() {
+    var grid = $("sysGrid");
+    grid.textContent = "";
+    if (!loaded) { grid.appendChild(el("div", "empty", "Загружаю…")); return; }
+    var stats = {};
+    items.forEach(function (it) {
+      var a = it.area || "Без системы";
+      stats[a] = stats[a] || { total: 0, done: 0, work: 0, plan: 0, idea: 0 };
+      stats[a].total++;
+      stats[a][it.status]++;
+    });
+    var names = Object.keys(stats).sort(function (a, b) { return stats[b].total - stats[a].total; });
+    if (!names.length) { grid.appendChild(el("div", "empty", "Систем пока нет: добавь первый пункт на доске.")); return; }
+    names.forEach(function (a) {
+      var st = stats[a];
+      var b = el("button", "sys");
+      b.type = "button";
+      b.appendChild(el("b", null, a));
+      b.appendChild(el("small", null, st.done + " из " + st.total + " готово" + (st.work ? " · " + st.work + " в работе" : "")));
+      var bar = el("div", "mini-bar");
+      ["done", "work", "plan", "idea"].forEach(function (k) {
+        if (!st[k]) return;
+        var i = el("i");
+        i.style.width = (st[k] / st.total * 100) + "%";
+        i.style.background = statusOf(k).color;
+        bar.appendChild(i);
+      });
+      b.appendChild(bar);
+      b.addEventListener("click", function () {
+        filter.area = a;
+        renderBoard();
+        $("board").scrollIntoView();
+      });
+      grid.appendChild(b);
+    });
+  }
+
+  // ---------- Доска ----------
+  function renderChips() {
+    var box = $("chips");
+    box.textContent = "";
+    var used = {};
+    items.forEach(function (it) { used[it.area] = (used[it.area] || 0) + 1; });
+    ["all"].concat(AREAS.filter(function (a) { return used[a]; })).forEach(function (a) {
+      var b = el("button", "chip", a === "all" ? "Все системы" : a + " · " + used[a]);
+      b.type = "button";
+      b.setAttribute("aria-pressed", filter.area === a ? "true" : "false");
+      b.addEventListener("click", function () { filter.area = a; renderBoard(); });
+      box.appendChild(b);
+    });
+  }
+
+  function cardView(it) {
+    var card = el("article", "card p-" + (it.priority || "mid"));
+    if (editing === it.id && canWrite) return cardEditor(it, card);
+    card.appendChild(el("h4", null, it.title || "Без названия"));
+    var meta = el("div", "meta");
+    if (it.area) meta.appendChild(el("span", "tag", it.area));
+    meta.appendChild(el("span", "prio p-" + (it.priority || "mid"), prioName(it.priority || "mid")));
+    card.appendChild(meta);
+    card.appendChild(el("p", "notes" + (it.notes ? "" : " none"), it.notes || "Без примечаний"));
+    if (canWrite && db) {
+      var act = el("div", "actions");
+      var sel = el("select", "mini");
+      sel.setAttribute("aria-label", "Колонка");
+      STATUSES.forEach(function (s) { option(sel, s.id, "→ " + s.name); });
+      sel.value = it.status;
+      sel.addEventListener("change", function () { update(it.id, { status: sel.value }); });
+      act.appendChild(sel);
+      var edit = el("button", "mini", "Изменить");
+      edit.type = "button";
+      edit.addEventListener("click", function () {
+        editing = it.id;
+        draft = { title: it.title || "", notes: it.notes || "", area: it.area || AREAS[0], priority: it.priority || "mid" };
+        confirmDel = null;
+        renderBoard();
+      });
+      act.appendChild(edit);
+      if (confirmDel === it.id) {
+        act.appendChild(el("span", "confirm", "Удалить?"));
+        var yes = el("button", "mini danger", "Да");
+        yes.type = "button";
+        yes.addEventListener("click", function () {
+          confirmDel = null;
+          db.collection("items").doc(it.id).delete().catch(fail);
+        });
+        var no = el("button", "mini", "Нет");
+        no.type = "button";
+        no.addEventListener("click", function () { confirmDel = null; renderBoard(); });
+        act.appendChild(yes);
+        act.appendChild(no);
+      } else {
+        var del = el("button", "mini danger", "Удалить");
+        del.type = "button";
+        del.addEventListener("click", function () { confirmDel = it.id; renderBoard(); });
+        act.appendChild(del);
+      }
+      card.appendChild(act);
+    }
+    return card;
+  }
+
+  function cardEditor(it, card) {
+    var t = el("input", "field");
+    t.id = "edit-title-" + it.id;
+    t.value = draft.title;
+    t.maxLength = 140;
+    t.setAttribute("aria-label", "Название");
+    t.addEventListener("input", function () { draft.title = t.value; });
+    card.appendChild(t);
+    var row = el("div", "meta");
+    var a = el("select", "mini");
+    a.setAttribute("aria-label", "Система");
+    AREAS.forEach(function (x) { option(a, x, x); });
+    a.value = draft.area;
+    a.addEventListener("change", function () { draft.area = a.value; });
+    var p = el("select", "mini");
+    p.setAttribute("aria-label", "Приоритет");
+    PRIOS.forEach(function (x) { option(p, x.id, x.name); });
+    p.value = draft.priority;
+    p.addEventListener("change", function () { draft.priority = p.value; });
+    row.appendChild(a);
+    row.appendChild(p);
+    card.appendChild(row);
+    var n = el("textarea", "field");
+    n.id = "edit-notes-" + it.id;
+    n.value = draft.notes;
+    n.maxLength = 2000;
+    n.rows = 4;
+    n.placeholder = "Примечание";
+    n.setAttribute("aria-label", "Примечание");
+    n.addEventListener("input", function () { draft.notes = n.value; });
+    card.appendChild(n);
+    var act = el("div", "actions");
+    var save = el("button", "mini ok", "Сохранить");
+    save.type = "button";
+    save.addEventListener("click", function () {
+      var patch = { title: draft.title.trim() || it.title, notes: draft.notes.trim(), area: draft.area, priority: draft.priority };
+      editing = null;
+      renderBoard();
+      update(it.id, patch);
+    });
+    var cancel = el("button", "mini", "Отмена");
+    cancel.type = "button";
+    cancel.addEventListener("click", function () { editing = null; renderBoard(); });
+    act.appendChild(save);
+    act.appendChild(cancel);
+    card.appendChild(act);
+    return card;
+  }
+
+  function matches(it) {
+    if (filter.area !== "all" && it.area !== filter.area) return false;
+    if (filter.q) {
+      var hay = ((it.title || "") + " " + (it.notes || "") + " " + (it.area || "")).toLowerCase();
+      if (hay.indexOf(filter.q) === -1) return false;
+    }
+    return true;
+  }
+
+  function renderBoard() {
+    renderChips();
+    $("addBtn").hidden = !(canWrite && db);
+    $("io").hidden = !(canWrite && db);
+    var k = $("kanban");
+    k.textContent = "";
+    STATUSES.forEach(function (s) {
+      var col = el("div", "col");
+      var head = el("div", "col-head");
+      var dot = el("span", "dot");
+      dot.style.background = s.color;
+      head.appendChild(dot);
+      head.appendChild(el("h3", null, s.name));
+      var list = items.filter(function (it) { return it.status === s.id && matches(it); }).sort(byPrio);
+      head.appendChild(el("span", "count", loaded ? String(list.length) : ""));
+      col.appendChild(head);
+      col.appendChild(el("p", "col-hint", s.hint));
+      if (!loaded) col.appendChild(el("div", "empty", "Загружаю…"));
+      else if (!list.length) {
+        var msg = items.length === 0
+          ? (s.id === "idea" ? "Пока пусто. Нажми «Новый пункт», чтобы добавить первую идею." : "Здесь появятся пункты.")
+          : (filter.area !== "all" || filter.q ? "Под фильтр ничего не подходит." : "Пока пусто.");
+        col.appendChild(el("div", "empty", msg));
+      } else list.forEach(function (it) { col.appendChild(cardView(it)); });
+      k.appendChild(col);
+    });
+  }
+
+  function render() {
+    renderHero();
+    renderNext();
+    renderPath();
+    renderSystems();
+    renderBoard();
+  }
+  render();
+
+  // ---------- Трава и гном на главном экране ----------
+  (function grass() {
+    var canvas = $("grass");
+    var ctx = canvas.getContext("2d");
+    var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    var blades = [];
+    var W = 0, H = 0, dpr = 1;
+    var GREENS = ["#2f5f2c", "#3b7335", "#4a8a3e", "#5a9c46", "#28502a", "#6aa84f", "#355f30"];
+    function seed(n) { var x = Math.sin(n * 127.1) * 43758.5453; return x - Math.floor(x); }
+    function build() {
+      var r = canvas.getBoundingClientRect();
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      W = r.width; H = r.height;
+      canvas.width = Math.round(W * dpr);
+      canvas.height = Math.round(H * dpr);
+      blades = [];
+      var count = Math.round(W / 9);
+      for (var i = 0; i < count; i++) {
+        var layer = i % 3; // 0 дальний, 2 ближний
+        blades.push({
+          x: seed(i + 1) * W,
+          w: 10 + seed(i + 7) * 18 + layer * 6,
+          h: H * (0.45 + seed(i + 3) * 0.55) * (0.75 + layer * 0.15),
+          lean: (seed(i + 11) - 0.5) * 0.5,
+          color: GREENS[Math.floor(seed(i + 5) * GREENS.length)],
+          layer: layer,
+          phase: seed(i + 13) * 6.28
+        });
+      }
+      blades.sort(function (a, b) { return a.layer - b.layer; });
+    }
+    function drawGnome(x, ground, s, t) {
+      var bob = reduce ? 0 : Math.abs(Math.sin(t * 2.2)) * 3 * s;
+      var y = ground - bob;
+      function r(col, bx, by, bw, bh) { ctx.fillStyle = col; ctx.fillRect(x + bx * s, y - by * s, bw * s, bh * s); }
+      r("#1c1612", -7, 4, 6, 4); r("#1c1612", 1, 4, 6, 4);           // ботинки
+      r("#3a2c25", -6, 12, 5, 8); r("#3a2c25", 1, 12, 5, 8);         // ноги
+      r("#5c2a8c", -8, 26, 16, 14);                                  // кафтан
+      r("#1c1612", -8, 14, 16, 2);                                   // пояс
+      r("#ffcd37", -2, 15, 4, 3);                                    // пряжка
+      r("#ecba94", -11, 22, 3, 4); r("#ecba94", 8, 22, 3, 4);        // руки
+      r("#5c2a8c", -11, 26, 3, 5); r("#5c2a8c", 8, 26, 3, 5);
+      r("#ecba94", -6, 36, 12, 10);                                  // лицо
+      r("#f5f5f0", -7, 30, 14, 8); r("#f5f5f0", -5, 22, 10, 8);      // борода
+      r("#d98a7a", -1, 33, 2, 2);                                    // нос
+      r("#1c1612", -4, 35, 2, 2); r("#1c1612", 2, 35, 2, 2);         // глаза
+      r("#a81c26", -8, 38, 16, 3);                                   // поля колпака
+      r("#d22630", -6, 44, 12, 6); r("#d22630", -4, 50, 8, 6); r("#d22630", -2, 55, 5, 5);
+      r("#ffcd37", -8, 41, 16, 2);                                   // корона
+    }
+    function frame(ms) {
+      var t = ms / 1000;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, W, H);
+      var ground = H;
+      for (var i = 0; i < blades.length; i++) {
+        var b = blades[i];
+        var sway = reduce ? 0 : Math.sin(t * (0.8 + b.layer * 0.25) + b.phase + b.x * 0.004) * (6 + b.layer * 4);
+        var tipX = b.x + b.lean * b.h + sway;
+        ctx.globalAlpha = 0.55 + b.layer * 0.2;
+        ctx.fillStyle = b.color;
+        ctx.beginPath();
+        ctx.moveTo(b.x - b.w / 2, ground);
+        ctx.lineTo(b.x + b.w / 2, ground);
+        ctx.lineTo(tipX + b.w * 0.08, ground - b.h);
+        ctx.lineTo(tipX - b.w * 0.12, ground - b.h * 0.97);
+        ctx.closePath();
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+      // гном стоит перед травой
+      drawGnome(W > 640 ? W * 0.76 : W * 0.8, ground - 6, W > 640 ? 3.2 : 2.2, t);
+      if (!reduce) requestAnimationFrame(frame);
+    }
+    build();
+    if (window.ResizeObserver) new ResizeObserver(function () { build(); if (reduce) frame(0); }).observe(canvas);
+    requestAnimationFrame(frame);
+  })();
+
+  // ---------- Данные: Firebase Firestore ----------
+  // Доступ по секретной ссылке: всё после # в адресе — ключ доски. Без ключа сайт ничего не грузит.
+  // Данные лежат в Firestore по пути boards/<ключ>/items/<пункт>; правила базы запрещают
+  // просматривать список досок, поэтому без ключа до пунктов не добраться.
+  function lockScreen(title, html) {
+    document.body.innerHTML = "";
+    var wrap = el("div", "lock");
+    var card = el("div", "lock-card");
+    card.appendChild(el("div", "top", title));
+    var txt = el("div", "txt");
+    txt.innerHTML = html; // только наш собственный статичный текст
+    card.appendChild(txt);
+    wrap.appendChild(card);
+    document.body.appendChild(wrap);
+  }
+
+  window.addEventListener("hashchange", function () { location.reload(); });
+  var key = decodeURIComponent((location.hash || "").replace(/^#/, "")).trim();
+  if (!/^[A-Za-z0-9_-]{32,128}$/.test(key)) {
+    lockScreen("Доступ по ссылке", "<p>Эта страница открывается только по полной ссылке с ключом доступа.</p><p>Попроси ссылку у владельца роадмапа.</p>");
+    return;
+  }
+  var cfg = window.FIREBASE_CONFIG || {};
+  if (!cfg.apiKey || !cfg.projectId || !window.firebase) {
+    lockScreen("Нужна настройка", "<p>Сайт ещё не подключён к базе.</p><p>Открой <code>index.html</code> и вставь конфиг Firebase в блок <code>FIREBASE_CONFIG</code> в конце файла.</p>");
+    return;
+  }
+
+  var col;
+  try {
+    firebase.initializeApp(cfg);
+    var fs = firebase.firestore();
+    col = fs.collection("boards").doc(key).collection("items");
+  } catch (e) {
+    lockScreen("Ошибка подключения", "<p>Не получилось подключиться к Firebase. Проверь конфиг в <code>FIREBASE_CONFIG</code>.</p>");
+    return;
+  }
+
+  // Обёртка в стиле прежней версии: остальной код сайта зовёт db.collection("items")
+  db = {
+    collection: function () {
+      return {
+        add: function (data) { return col.add(data); },
+        doc: function (id) { return col.doc(id); }
+      };
+    }
+  };
+  render();
+
+  col.onSnapshot(function (snap) {
+    items = snap.docs.map(function (doc) {
+      var data = doc.data() || {};
+      return {
+        id: doc.id,
+        title: String(data.title || ""),
+        notes: String(data.notes || ""),
+        area: String(data.area || ""),
+        priority: ["high", "mid", "low"].indexOf(data.priority) >= 0 ? data.priority : "mid",
+        status: STATUSES.some(function (s) { return s.id === data.status; }) ? data.status : "idea",
+        created: Number(data.created) || 0
+      };
+    });
+    loaded = true;
+    $("notice").hidden = true;
+    if (editing && !items.some(function (i) { return i.id === editing; })) editing = null;
+    render();
+  }, function (e) {
+    loaded = true;
+    canWrite = false;
+    var nt = $("notice");
+    nt.hidden = false;
+    nt.textContent = e && e.code === "permission-denied"
+      ? "Нет доступа к данным. Проверь, что правила Firestore опубликованы (файл firestore.rules)."
+      : "Связь с базой потеряна. Обнови страницу.";
+    render();
+  });
+
+  // ---------- Копия и импорт ----------
+  $("exportBtn").addEventListener("click", function () {
+    var payload = {
+      format: "gnome-roadmap",
+      version: 1,
+      exportedAt: new Date().toISOString(),
+      items: items.map(function (i) {
+        return { id: i.id, title: i.title, notes: i.notes, area: i.area, priority: i.priority, status: i.status, created: i.created };
+      })
+    };
+    var blob = new Blob([JSON.stringify(payload, null, 1)], { type: "application/json" });
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "gnome-roadmap-" + new Date().toISOString().slice(0, 10) + ".json";
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+  });
+
+  $("importFile").addEventListener("change", function (ev) {
+    var file = ev.target.files && ev.target.files[0];
+    ev.target.value = "";
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function () {
+      var parsed;
+      try { parsed = JSON.parse(reader.result); } catch (e) { toast("Это не JSON-файл роадмапа."); return; }
+      var list = Array.isArray(parsed) ? parsed : parsed && parsed.items;
+      if (!Array.isArray(list) || !list.length) { toast("В файле нет пунктов."); return; }
+      var ok = /^[A-Za-z0-9_-]{1,100}$/;
+      var batch = firebase.firestore().batch();
+      var n = 0;
+      list.slice(0, 450).forEach(function (raw, idx) {
+        if (!raw || !raw.title) return;
+        var body = {
+          title: String(raw.title).slice(0, 140),
+          notes: String(raw.notes || "").slice(0, 2000),
+          area: String(raw.area || "").slice(0, 40),
+          priority: ["high", "mid", "low"].indexOf(raw.priority) >= 0 ? raw.priority : "mid",
+          status: ["idea", "plan", "work", "done"].indexOf(raw.status) >= 0 ? raw.status : "idea",
+          created: Number(raw.created) || Date.now() + idx
+        };
+        var ref = raw.id && ok.test(String(raw.id)) ? col.doc(String(raw.id)) : col.doc();
+        batch.set(ref, body);
+        n++;
+      });
+      if (!n) { toast("В файле нет подходящих пунктов."); return; }
+      batch.commit().then(function () { toast("Загружено пунктов: " + n); }, fail);
+    };
+    reader.readAsText(file);
+  });
+})();
+</script>
+</body>
+</html>
