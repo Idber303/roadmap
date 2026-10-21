@@ -1296,15 +1296,49 @@ window.FIREBASE_CONFIG = {
     document.body.appendChild(wrap);
   }
 
-  window.addEventListener("hashchange", function () { location.reload(); });
+  var KEY_RE = /^[A-Za-z0-9_-]{32,128}$/;
+  var STORE = "gnomeRoadmapKey";
+
+  // Кнопки и меню (#board, #next…) только прокручивают страницу — ключ в адресе не трогаем
+  document.addEventListener("click", function (e) {
+    var a = e.target.closest && e.target.closest('a[href^="#"]');
+    if (!a) return;
+    e.preventDefault();
+    var target = document.getElementById(a.getAttribute("href").slice(1));
+    if (target) {
+      var smooth = !(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+      target.scrollIntoView({ behavior: smooth ? "smooth" : "auto" });
+    }
+  });
+
   var key = decodeURIComponent((location.hash || "").replace(/^#/, "")).trim();
-  if (!/^[A-Za-z0-9_-]{32,128}$/.test(key)) {
+  if (KEY_RE.test(key)) {
+    try { localStorage.setItem(STORE, key); } catch (e) {}
+  } else {
+    // в адресе нет ключа — берём тот, с которым этот браузер уже открывал сайт
+    var saved = null;
+    try { saved = localStorage.getItem(STORE); } catch (e) {}
+    if (saved && KEY_RE.test(saved)) {
+      key = saved;
+      try { history.replaceState(null, "", location.pathname + location.search + "#" + key); } catch (e) {}
+    }
+  }
+  // вставили в адрес другую ссылку с ключом — открываем ту доску
+  window.addEventListener("hashchange", function () {
+    var h = decodeURIComponent((location.hash || "").replace(/^#/, "")).trim();
+    if (KEY_RE.test(h) && h !== key) location.reload();
+  });
+  if (!KEY_RE.test(key)) {
     lockScreen("Доступ по ссылке", "<p>Эта страница открывается только по полной ссылке с ключом доступа.</p><p>Попроси ссылку у владельца роадмапа.</p>");
     return;
   }
   var cfg = window.FIREBASE_CONFIG || {};
-  if (!cfg.apiKey || !cfg.projectId || !window.firebase) {
-    lockScreen("Нужна настройка", "<p>Сайт ещё не подключён к базе.</p><p>Открой <code>index.html</code> и вставь конфиг Firebase в блок <code>FIREBASE_CONFIG</code> в конце файла.</p>");
+  if (!cfg.apiKey || !cfg.projectId) {
+    lockScreen("Нужна настройка", "<p>Сайт ещё не подключён к базе: в файле нет конфига.</p><p>Открой <code>index.html</code> и вставь конфиг Firebase в блок <code>FIREBASE_CONFIG</code> в конце файла. Если уже вставил — подожди пару минут и обнови страницу с Ctrl+F5.</p>");
+    return;
+  }
+  if (!window.firebase) {
+    lockScreen("Firebase не загрузился", "<p>Конфиг на месте, но браузер не смог загрузить библиотеку Firebase.</p><p>Отключи блокировщик рекламы для этого сайта или открой ссылку в другом браузере, потом обнови страницу.</p>");
     return;
   }
 
